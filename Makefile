@@ -17,6 +17,7 @@ help:
 
 install:
 	pip install -r requirements.txt
+	$(PYTHON) -m playwright install chromium
 
 $(DATA_CLEAN): $(DATA_RAW)
 	$(PYTHON) -c "import sys; sys.path.insert(0, '.'); \

@@ -77,35 +77,93 @@ Comparamos três modelos com `class_weight='balanced'` para tratar o desbalancea
 
 ## Como executar
 
-Requer **Python 3.12** e `pip`. Clone o repositório e siga os passos:
+Requer **Python 3.12**. Siga os passos na ordem abaixo para garantir reprodutibilidade.
+
+### 1. Clonar o repositório
 
 ```bash
-# 1. Instalar dependências
-make install
-
-# 2. Gerar dataset limpo (coloque credit_risk_dataset.csv em data/raw/ antes)
-make data
-
-# 3. Executar os notebooks (opcional — outputs já salvos no repo)
-make notebooks
-
-# 4. Iniciar o dashboard interativo
-make dashboard
-# acesse http://localhost:8501
-
-# 5. Gerar o relatório em PDF
-make report
-# gera reports/relatorio.pdf via Playwright/Chromium
-
-# Ou sem PDF (só HTML):
-make report-html
+git clone https://github.com/IgorZanette/credit-risk-analysis-ds.git
+cd credit-risk-analysis-ds
 ```
 
-### Sem Makefile (manual)
+### 2. Criar e ativar um ambiente virtual
+
+**Windows:**
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+**Linux / macOS:**
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+> Use sempre o ambiente virtual para evitar conflitos de versão entre projetos.
+
+### 3. Instalar dependências
 
 ```bash
 pip install -r requirements.txt
+python -m playwright install chromium
+```
+
+> O `scikit-learn` está fixado na versão **1.8.0** — a mesma com que o modelo foi treinado. Não atualize essa versão ou o `model.pkl` não carregará.
+
+### 4. Baixar o dataset
+
+Baixe o arquivo `credit_risk_dataset.csv` em [Credit Risk Dataset — Kaggle](https://www.kaggle.com/datasets/laotse/credit-risk-dataset) e coloque em `data/raw/`.
+
+### 5. Gerar o dataset limpo
+
+```bash
+python -c "
+import sys; sys.path.insert(0, '.')
+from pathlib import Path
+from src.data import load_raw_data, clean_data, save_processed_data
+df = load_raw_data('data/raw/credit_risk_dataset.csv')
+df = clean_data(df)
+Path('data/processed').mkdir(parents=True, exist_ok=True)
+save_processed_data(df, 'data/processed/credit_clean.csv')
+print('Gerado: data/processed/credit_clean.csv')
+"
+```
+
+### 6. Iniciar o dashboard
+
+```bash
 python -m streamlit run dashboard/app.py
+```
+
+Acesse **http://localhost:8501** no navegador.
+
+### 7. Gerar o relatório em PDF (opcional)
+
+```bash
+python -m jupyter nbconvert --to html --no-input reports/relatorio.ipynb --output relatorio --output-dir reports/
+python -c "
+from playwright.sync_api import sync_playwright
+from pathlib import Path
+html = Path('reports/relatorio.html').resolve()
+pdf  = Path('reports/relatorio.pdf').resolve()
+with sync_playwright() as p:
+    b = p.chromium.launch()
+    pg = b.new_page()
+    pg.goto(html.as_uri(), wait_until='networkidle')
+    pg.pdf(path=str(pdf), format='A4', margin={'top':'15mm','bottom':'15mm','left':'15mm','right':'15mm'}, print_background=True)
+    b.close()
+print(f'PDF gerado: {pdf}')
+"
+```
+
+### Com Makefile (se tiver `make` instalado)
+
+```bash
+make install                   # instala dependências
+make data                      # gera credit_clean.csv
+make dashboard                 # inicia o dashboard
+make report                    # gera reports/relatorio.pdf
 ```
 
 ---
