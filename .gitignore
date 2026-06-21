@@ -26,3 +26,10 @@ data/processed/
 
 # --- Streamlit ---
 .streamlit/secrets.toml
+
+# --- Relatório (gerados, não versionar) ---
+reports/relatorio.html
+reports/relatorio.pdf
+
+# --- uv ---
+.python-version
