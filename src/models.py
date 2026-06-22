@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import joblib
+import numpy as np
 import pandas as pd
 from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -22,8 +23,9 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     roc_auc_score,
+    roc_curve,
 )
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 
@@ -93,6 +95,39 @@ def evaluate_model(model: Any, X_test: pd.DataFrame, y_test: pd.Series) -> dict:
         "f1": f1_score(y_test, y_pred),
         "roc_auc": roc_auc_score(y_test, y_proba),
         "confusion_matrix": confusion_matrix(y_test, y_pred),
+    }
+
+
+def ks_gini(y_true: pd.Series, y_proba) -> dict:
+    """Métricas clássicas de risco de crédito: KS e Gini.
+
+    - **KS** (Kolmogorov-Smirnov): máxima distância entre as taxas acumuladas de
+      verdadeiros positivos e falsos positivos ao longo do score; mede o poder de
+      separação entre bons e maus pagadores.
+    - **Gini** = 2 · ROC-AUC − 1; padrão de mercado em credit scoring.
+    """
+    fpr, tpr, _ = roc_curve(y_true, y_proba)
+    auc = roc_auc_score(y_true, y_proba)
+    return {
+        "ks": float(np.max(tpr - fpr)),
+        "gini": float(2 * auc - 1),
+        "roc_auc": float(auc),
+    }
+
+
+def cross_validate_auc(
+    model: Pipeline, X: pd.DataFrame, y: pd.Series, cv: int = 5
+) -> dict:
+    """ROC-AUC por validação cruzada estratificada (StratifiedKFold).
+
+    Mostra a estabilidade/robustez do modelo para além do split único de teste.
+    """
+    skf = StratifiedKFold(n_splits=cv, shuffle=True, random_state=RANDOM_STATE)
+    scores = cross_val_score(model, X, y, cv=skf, scoring="roc_auc", n_jobs=-1)
+    return {
+        "scores": scores,
+        "mean": float(scores.mean()),
+        "std": float(scores.std()),
     }
 
 

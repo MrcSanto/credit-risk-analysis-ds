@@ -27,9 +27,12 @@ data/processed/
 # --- Streamlit ---
 .streamlit/secrets.toml
 
-# --- Relatório (gerados, não versionar) ---
+# --- Relatório ---
+# HTML intermediário é gerado e descartável; o PDF final é versionado.
 reports/relatorio.html
-reports/relatorio.pdf
 
 # --- uv ---
 .python-version
+
+# --- Documento de planejamento (nao versionar) ---
+PLANO_FINALIZACAO_claude_code.md

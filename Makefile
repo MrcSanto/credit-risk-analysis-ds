@@ -1,6 +1,13 @@
-PYTHON     = python
 VENV       = .venv
+# Python do sistema e caminho do Python no venv conforme o SO
+# (Windows usa 'python' + Scripts/; Linux/Mac usam 'python3' + bin/)
+ifeq ($(OS),Windows_NT)
+PYTHON     = python
 VENV_PY    = $(VENV)/Scripts/python
+else
+PYTHON     = python3
+VENV_PY    = $(VENV)/bin/python
+endif
 DATA_RAW   = data/raw/credit_risk_dataset.csv
 DATA_CLEAN = data/processed/credit_clean.csv
 

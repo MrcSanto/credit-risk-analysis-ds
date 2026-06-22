@@ -82,7 +82,7 @@ Requer **Python 3.12**. Siga os passos na ordem abaixo para garantir reprodutibi
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/IgorZanette/credit-risk-analysis-ds.git
+git clone https://github.com/MrcSanto/credit-risk-analysis-ds.git
 cd credit-risk-analysis-ds
 ```
 
