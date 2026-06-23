@@ -17,11 +17,11 @@ import pandas as pd
 import seaborn as sns
 import streamlit as st
 
+from src.models import load_model
+
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-
-from src.models import load_model
 
 # ─── Configuração da página ───────────────────────────────────────────────────
 st.set_page_config(
@@ -90,22 +90,26 @@ df["status_label"] = df["loan_status"].map({0: "Adimplente", 1: "Inadimplente"})
 PALETTE = {"Adimplente": "#55a868", "Inadimplente": "#c44e52"}
 
 # Estatísticas do dataset completo (usadas no simulador para comparação)
-STATS = df_full.agg({
-    "loan_int_rate": "mean",
-    "loan_percent_income": "mean",
-    "person_income": "mean",
-    "loan_amnt": "mean",
-    "person_emp_length": "mean",
-}).to_dict()
+STATS = df_full.agg(
+    {
+        "loan_int_rate": "mean",
+        "loan_percent_income": "mean",
+        "person_income": "mean",
+        "loan_amnt": "mean",
+        "person_emp_length": "mean",
+    }
+).to_dict()
 
 # Métricas dos modelos (obtidas no notebook 03_modeling)
-MODEL_METRICS = pd.DataFrame({
-    "Modelo": ["HistGradientBoosting ⭐", "Random Forest", "Regressão Logística"],
-    "ROC-AUC": [0.95, 0.94, 0.88],
-    "Recall": [0.81, 0.72, 0.80],
-    "F1": [0.81, 0.83, 0.66],
-    "Acurácia": [0.92, 0.92, 0.84],
-}).set_index("Modelo")
+MODEL_METRICS = pd.DataFrame(
+    {
+        "Modelo": ["HistGradientBoosting ⭐", "Random Forest", "Regressão Logística"],
+        "ROC-AUC": [0.95, 0.94, 0.88],
+        "Recall": [0.81, 0.72, 0.80],
+        "F1": [0.81, 0.83, 0.66],
+        "Acurácia": [0.92, 0.92, 0.84],
+    }
+).set_index("Modelo")
 
 # Matriz de confusão do melhor modelo no conjunto de teste (6 482 amostras)
 CONF_MATRIX = pd.DataFrame(
@@ -115,9 +119,9 @@ CONF_MATRIX = pd.DataFrame(
 )
 
 # ─── Tabs principais ─────────────────────────────────────────────────────────
-tab_eda, tab_sim, tab_model = st.tabs([
-    "📊 Análise Exploratória", "🔮 Simulador de Risco", "🏆 Resultados do Modelo"
-])
+tab_eda, tab_sim, tab_model = st.tabs(
+    ["📊 Análise Exploratória", "🔮 Simulador de Risco", "🏆 Resultados do Modelo"]
+)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -127,7 +131,9 @@ with tab_eda:
     st.header("Análise Exploratória — Risco de Crédito")
 
     if df.empty:
-        st.warning("Nenhum registro com os filtros selecionados. Ajuste os filtros na sidebar.")
+        st.warning(
+            "Nenhum registro com os filtros selecionados. Ajuste os filtros na sidebar."
+        )
         st.stop()
 
     # ── KPIs ─────────────────────────────────────────────────────────────────
@@ -144,13 +150,19 @@ with tab_eda:
 
     with col_a:
         st.subheader("Inadimplência por nota de risco")
-        taxa_grade = (
-            df.groupby("loan_grade")["loan_status"].mean().sort_index() * 100
-        )
+        taxa_grade = df.groupby("loan_grade")["loan_status"].mean().sort_index() * 100
         fig, ax = plt.subplots(figsize=(6, 4))
-        bars = ax.bar(taxa_grade.index, taxa_grade.values, color="#c44e52", edgecolor="white")
+        bars = ax.bar(
+            taxa_grade.index, taxa_grade.values, color="#c44e52", edgecolor="white"
+        )
         media = df["loan_status"].mean() * 100
-        ax.axhline(media, color="gray", linestyle="--", linewidth=1.2, label=f"Média ({media:.1f}%)")
+        ax.axhline(
+            media,
+            color="gray",
+            linestyle="--",
+            linewidth=1.2,
+            label=f"Média ({media:.1f}%)",
+        )
         ax.set_ylabel("Taxa de inadimplência (%)")
         ax.set_xlabel("loan_grade")
         ax.set_title("Inadimplência por nota de risco (A → maior risco → G)")
@@ -160,7 +172,9 @@ with tab_eda:
                 bar.get_x() + bar.get_width() / 2,
                 bar.get_height() + 0.5,
                 f"{val:.1f}%",
-                ha="center", va="bottom", fontsize=9,
+                ha="center",
+                va="bottom",
+                fontsize=9,
             )
         plt.tight_layout()
         st.pyplot(fig)
@@ -172,14 +186,28 @@ with tab_eda:
             df.groupby("loan_intent")["loan_status"].mean().sort_values() * 100
         )
         fig, ax = plt.subplots(figsize=(6, 4))
-        bars = ax.barh(taxa_intent.index, taxa_intent.values, color="#4c72b0", edgecolor="white")
+        bars = ax.barh(
+            taxa_intent.index, taxa_intent.values, color="#4c72b0", edgecolor="white"
+        )
         media = df["loan_status"].mean() * 100
-        ax.axvline(media, color="gray", linestyle="--", linewidth=1.2, label=f"Média ({media:.1f}%)")
+        ax.axvline(
+            media,
+            color="gray",
+            linestyle="--",
+            linewidth=1.2,
+            label=f"Média ({media:.1f}%)",
+        )
         ax.set_xlabel("Taxa de inadimplência (%)")
         ax.set_title("Inadimplência por finalidade do empréstimo")
         ax.legend()
         for bar, val in zip(bars, taxa_intent.values):
-            ax.text(val + 0.3, bar.get_y() + bar.get_height() / 2, f"{val:.1f}%", va="center", fontsize=9)
+            ax.text(
+                val + 0.3,
+                bar.get_y() + bar.get_height() / 2,
+                f"{val:.1f}%",
+                va="center",
+                fontsize=9,
+            )
         plt.tight_layout()
         st.pyplot(fig)
         plt.close()
@@ -207,8 +235,12 @@ with tab_eda:
         st.subheader("Taxa de juros por status")
         fig, ax = plt.subplots(figsize=(6, 4))
         sns.boxplot(
-            x="status_label", y="loan_int_rate", data=df, ax=ax,
-            palette=PALETTE, order=["Adimplente", "Inadimplente"],
+            x="status_label",
+            y="loan_int_rate",
+            data=df,
+            ax=ax,
+            palette=PALETTE,
+            order=["Adimplente", "Inadimplente"],
         )
         ax.set_title("Distribuição da taxa de juros por status")
         ax.set_xlabel("")
@@ -226,8 +258,12 @@ with tab_eda:
         df_trunc = df[df["person_income"] <= p99]
         fig, ax = plt.subplots(figsize=(6, 4))
         sns.boxplot(
-            x="status_label", y="person_income", data=df_trunc, ax=ax,
-            palette=PALETTE, order=["Adimplente", "Inadimplente"],
+            x="status_label",
+            y="person_income",
+            data=df_trunc,
+            ax=ax,
+            palette=PALETTE,
+            order=["Adimplente", "Inadimplente"],
         )
         ax.set_title("Renda anual por status (até p99)")
         ax.set_xlabel("")
@@ -240,9 +276,15 @@ with tab_eda:
         st.subheader("Comprometimento de renda (empréstimo / renda)")
         fig, ax = plt.subplots(figsize=(6, 4))
         sns.histplot(
-            data=df, x="loan_percent_income", hue="status_label",
-            bins=30, ax=ax, palette=PALETTE,
-            stat="density", common_norm=False, alpha=0.6,
+            data=df,
+            x="loan_percent_income",
+            hue="status_label",
+            bins=30,
+            ax=ax,
+            palette=PALETTE,
+            stat="density",
+            common_norm=False,
+            alpha=0.6,
         )
         ax.set_title("Distribuição do comprometimento de renda")
         ax.set_xlabel("loan_percent_income")
@@ -272,12 +314,22 @@ with tab_sim:
         c1, c2, c3 = st.columns(3)
         person_age = c1.number_input("Idade", min_value=18, max_value=100, value=30)
         person_income = c2.number_input(
-            "Renda anual (US$)", min_value=1_000, max_value=2_000_000, value=50_000, step=1_000
+            "Renda anual (US$)",
+            min_value=1_000,
+            max_value=2_000_000,
+            value=50_000,
+            step=1_000,
         )
         person_emp_length = c3.number_input(
-            "Tempo de emprego (anos)", min_value=0.0, max_value=41.0, value=3.0, step=0.5
+            "Tempo de emprego (anos)",
+            min_value=0.0,
+            max_value=41.0,
+            value=3.0,
+            step=0.5,
         )
-        person_home_ownership = c1.selectbox("Tipo de moradia", ["RENT", "OWN", "MORTGAGE", "OTHER"])
+        person_home_ownership = c1.selectbox(
+            "Tipo de moradia", ["RENT", "OWN", "MORTGAGE", "OTHER"]
+        )
         cb_person_default_on_file = c2.selectbox("Histórico de calote?", ["N", "Y"])
         cb_person_cred_hist_length = c3.number_input(
             "Histórico de crédito (anos)", min_value=2, max_value=30, value=4
@@ -286,36 +338,58 @@ with tab_sim:
         st.subheader("Dados do empréstimo")
         d1, d2, d3 = st.columns(3)
         loan_amnt = d1.number_input(
-            "Valor do empréstimo (US$)", min_value=500, max_value=35_000, value=10_000, step=500
+            "Valor do empréstimo (US$)",
+            min_value=500,
+            max_value=35_000,
+            value=10_000,
+            step=500,
         )
         loan_int_rate = d2.number_input(
-            "Taxa de juros (%)", min_value=5.42, max_value=23.22, value=11.0, step=0.1, format="%.2f"
+            "Taxa de juros (%)",
+            min_value=5.42,
+            max_value=23.22,
+            value=11.0,
+            step=0.1,
+            format="%.2f",
         )
         loan_intent = d3.selectbox(
             "Finalidade",
-            ["PERSONAL", "EDUCATION", "MEDICAL", "VENTURE", "HOMEIMPROVEMENT", "DEBTCONSOLIDATION"],
+            [
+                "PERSONAL",
+                "EDUCATION",
+                "MEDICAL",
+                "VENTURE",
+                "HOMEIMPROVEMENT",
+                "DEBTCONSOLIDATION",
+            ],
         )
         loan_grade = d1.selectbox("Nota de risco", ["A", "B", "C", "D", "E", "F", "G"])
         loan_percent_income = loan_amnt / person_income if person_income > 0 else 0.0
         d2.metric("Comprometimento de renda", f"{loan_percent_income:.1%}")
         d3.markdown("")
 
-        submitted = st.form_submit_button("Calcular Risco", type="primary", use_container_width=True)
+        submitted = st.form_submit_button(
+            "Calcular Risco", type="primary", use_container_width=True
+        )
 
     if submitted:
-        input_df = pd.DataFrame([{
-            "person_age": person_age,
-            "person_income": person_income,
-            "person_home_ownership": person_home_ownership,
-            "person_emp_length": person_emp_length,
-            "loan_intent": loan_intent,
-            "loan_grade": loan_grade,
-            "loan_amnt": loan_amnt,
-            "loan_int_rate": loan_int_rate,
-            "loan_percent_income": loan_percent_income,
-            "cb_person_default_on_file": cb_person_default_on_file,
-            "cb_person_cred_hist_length": cb_person_cred_hist_length,
-        }])
+        input_df = pd.DataFrame(
+            [
+                {
+                    "person_age": person_age,
+                    "person_income": person_income,
+                    "person_home_ownership": person_home_ownership,
+                    "person_emp_length": person_emp_length,
+                    "loan_intent": loan_intent,
+                    "loan_grade": loan_grade,
+                    "loan_amnt": loan_amnt,
+                    "loan_int_rate": loan_int_rate,
+                    "loan_percent_income": loan_percent_income,
+                    "cb_person_default_on_file": cb_person_default_on_file,
+                    "cb_person_cred_hist_length": cb_person_cred_hist_length,
+                }
+            ]
+        )
 
         prob = float(model.predict_proba(input_df)[0, 1])
 
@@ -351,8 +425,20 @@ with tab_sim:
             fig, ax = plt.subplots(figsize=(7, 1.4))
             ax.barh(0, 1.0, color="#e8e8e8", height=0.5)
             ax.barh(0, prob, color=color, height=0.5)
-            ax.axvline(0.30, color="#f0ad4e", linestyle="--", linewidth=1.5, label="30% (risco moderado)")
-            ax.axvline(0.60, color="#c44e52", linestyle="--", linewidth=1.5, label="60% (alto risco)")
+            ax.axvline(
+                0.30,
+                color="#f0ad4e",
+                linestyle="--",
+                linewidth=1.5,
+                label="30% (risco moderado)",
+            )
+            ax.axvline(
+                0.60,
+                color="#c44e52",
+                linestyle="--",
+                linewidth=1.5,
+                label="60% (alto risco)",
+            )
             ax.set_xlim(0, 1)
             ax.set_xticks([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
             ax.set_xticklabels([f"{x:.0%}" for x in ax.get_xticks()], fontsize=8)
@@ -375,37 +461,62 @@ with tab_sim:
         st.subheader("Fatores de risco identificados")
         st.caption("Comparação com a média dos 32.409 clientes do dataset.")
 
-        GRADE_RISK = {"A": 0.055, "B": 0.119, "C": 0.173, "D": 0.318,
-                      "E": 0.462, "F": 0.529, "G": 0.579}
+        GRADE_RISK = {
+            "A": 0.055,
+            "B": 0.119,
+            "C": 0.173,
+            "D": 0.318,
+            "E": 0.462,
+            "F": 0.529,
+            "G": 0.579,
+        }
         grade_default_rate = GRADE_RISK.get(loan_grade, 0)
 
         alertas = []
         positivos = []
 
         if loan_grade in ("E", "F", "G"):
-            alertas.append(f"**Nota de risco {loan_grade}** — taxa histórica de inadimplência dessa nota: {grade_default_rate:.0%}")
+            alertas.append(
+                f"**Nota de risco {loan_grade}** — taxa histórica de inadimplência dessa nota: {grade_default_rate:.0%}"
+            )
         else:
-            positivos.append(f"**Nota de risco {loan_grade}** — nota baixa, bom sinal ({grade_default_rate:.0%} de inadimplência histórica)")
+            positivos.append(
+                f"**Nota de risco {loan_grade}** — nota baixa, bom sinal ({grade_default_rate:.0%} de inadimplência histórica)"
+            )
 
         if loan_int_rate > STATS["loan_int_rate"] * 1.3:
-            alertas.append(f"**Taxa de juros alta** — {loan_int_rate:.1f}% vs média do dataset ({STATS['loan_int_rate']:.1f}%)")
+            alertas.append(
+                f"**Taxa de juros alta** — {loan_int_rate:.1f}% vs média do dataset ({STATS['loan_int_rate']:.1f}%)"
+            )
         elif loan_int_rate < STATS["loan_int_rate"] * 0.8:
-            positivos.append(f"**Taxa de juros baixa** — {loan_int_rate:.1f}% abaixo da média ({STATS['loan_int_rate']:.1f}%)")
+            positivos.append(
+                f"**Taxa de juros baixa** — {loan_int_rate:.1f}% abaixo da média ({STATS['loan_int_rate']:.1f}%)"
+            )
 
         if loan_percent_income > STATS["loan_percent_income"] * 1.5:
-            alertas.append(f"**Comprometimento de renda alto** — {loan_percent_income:.0%} vs média ({STATS['loan_percent_income']:.0%})")
+            alertas.append(
+                f"**Comprometimento de renda alto** — {loan_percent_income:.0%} vs média ({STATS['loan_percent_income']:.0%})"
+            )
         else:
-            positivos.append(f"**Comprometimento de renda ok** — {loan_percent_income:.0%} (média: {STATS['loan_percent_income']:.0%})")
+            positivos.append(
+                f"**Comprometimento de renda ok** — {loan_percent_income:.0%} (média: {STATS['loan_percent_income']:.0%})"
+            )
 
         if cb_person_default_on_file == "Y":
-            alertas.append("**Histórico de calote** — cliente já teve inadimplência registrada")
+            alertas.append(
+                "**Histórico de calote** — cliente já teve inadimplência registrada"
+            )
         else:
             positivos.append("**Sem histórico de calote** — bom sinal")
 
         if person_income < STATS["person_income"] * 0.6:
-            alertas.append(f"**Renda baixa** — US$ {person_income:,.0f} vs média (US$ {STATS['person_income']:,.0f})")
+            alertas.append(
+                f"**Renda baixa** — US$ {person_income:,.0f} vs média (US$ {STATS['person_income']:,.0f})"
+            )
         elif person_income > STATS["person_income"] * 1.4:
-            positivos.append(f"**Renda alta** — US$ {person_income:,.0f} acima da média (US$ {STATS['person_income']:,.0f})")
+            positivos.append(
+                f"**Renda alta** — US$ {person_income:,.0f} acima da média (US$ {STATS['person_income']:,.0f})"
+            )
 
         fa, fb = st.columns(2)
         with fa:
@@ -460,13 +571,24 @@ with tab_model:
         st.subheader("ROC-AUC por modelo")
         fig, ax = plt.subplots(figsize=(6, 4))
         cores = ["#c44e52" if "⭐" in m else "#aec6cf" for m in MODEL_METRICS.index]
-        bars = ax.barh(MODEL_METRICS.index, MODEL_METRICS["ROC-AUC"], color=cores, edgecolor="white")
+        bars = ax.barh(
+            MODEL_METRICS.index,
+            MODEL_METRICS["ROC-AUC"],
+            color=cores,
+            edgecolor="white",
+        )
         ax.set_xlim(0.5, 1.0)
         ax.set_xlabel("ROC-AUC")
         ax.set_title("ROC-AUC por modelo (maior = melhor)")
         for bar, val in zip(bars, MODEL_METRICS["ROC-AUC"]):
-            ax.text(val + 0.002, bar.get_y() + bar.get_height() / 2,
-                    f"{val:.2f}", va="center", fontsize=10, fontweight="bold")
+            ax.text(
+                val + 0.002,
+                bar.get_y() + bar.get_height() / 2,
+                f"{val:.2f}",
+                va="center",
+                fontsize=10,
+                fontweight="bold",
+            )
         plt.tight_layout()
         st.pyplot(fig)
         plt.close()
@@ -474,7 +596,7 @@ with tab_model:
     with col_m2:
         st.subheader("Matriz de confusão — HistGradientBoosting")
         fig, ax = plt.subplots(figsize=(6, 4))
-        import numpy as np
+
         data = CONF_MATRIX.values
         im = ax.imshow(data, cmap="Blues")
         ax.set_xticks([0, 1])
@@ -483,9 +605,16 @@ with tab_model:
         ax.set_yticklabels(["Real: Adimplente", "Real: Inadimplente"])
         for i in range(2):
             for j in range(2):
-                ax.text(j, i, f"{data[i, j]:,}", ha="center", va="center",
-                        fontsize=14, fontweight="bold",
-                        color="white" if data[i, j] > data.max() / 2 else "black")
+                ax.text(
+                    j,
+                    i,
+                    f"{data[i, j]:,}",
+                    ha="center",
+                    va="center",
+                    fontsize=14,
+                    fontweight="bold",
+                    color="white" if data[i, j] > data.max() / 2 else "black",
+                )
         ax.set_title("Matriz de confusão (conjunto de teste)")
         fig.colorbar(im, ax=ax)
         plt.tight_layout()
@@ -503,7 +632,14 @@ with tab_model:
     cores_bar = ["#4c72b0", "#c44e52", "#55a868", "#dd8452"]
     for i, (metrica, cor) in enumerate(zip(metricas, cores_bar)):
         offset = (i - 1.5) * width
-        bars = ax.bar([xi + offset for xi in x], MODEL_METRICS[metrica], width, label=metrica, color=cor, alpha=0.85)
+        bars = ax.bar(
+            [xi + offset for xi in x],
+            MODEL_METRICS[metrica],
+            width,
+            label=metrica,
+            color=cor,
+            alpha=0.85,
+        )
     ax.set_xticks(list(x))
     ax.set_xticklabels(MODEL_METRICS.index, fontsize=9)
     ax.set_ylim(0, 1.05)
@@ -518,24 +654,28 @@ with tab_model:
     # ── Importância das features ─────────────────────────────────────────────
     st.divider()
     st.subheader("Importância das features (Permutation Importance — ROC-AUC)")
-    st.caption("Mede quanto o ROC-AUC cai ao embaralhar cada variável. Obtido no notebook 03_modeling.")
+    st.caption(
+        "Mede quanto o ROC-AUC cai ao embaralhar cada variável. Obtido no notebook 03_modeling."
+    )
 
-    feature_imp = pd.Series({
-        "loan_grade": 0.185,
-        "loan_int_rate": 0.142,
-        "loan_percent_income": 0.098,
-        "person_income": 0.071,
-        "cb_person_default_on_file": 0.058,
-        "loan_amnt": 0.034,
-        "loan_to_income_ratio": 0.029,
-        "person_emp_length": 0.018,
-        "person_age": 0.011,
-        "cb_person_cred_hist_length": 0.007,
-        "int_rate_to_loan_amt_ratio": 0.005,
-        "loan_to_emp_length_ratio": 0.003,
-        "loan_intent": 0.002,
-        "person_home_ownership": 0.001,
-    }).sort_values()
+    feature_imp = pd.Series(
+        {
+            "loan_grade": 0.185,
+            "loan_int_rate": 0.142,
+            "loan_percent_income": 0.098,
+            "person_income": 0.071,
+            "cb_person_default_on_file": 0.058,
+            "loan_amnt": 0.034,
+            "loan_to_income_ratio": 0.029,
+            "person_emp_length": 0.018,
+            "person_age": 0.011,
+            "cb_person_cred_hist_length": 0.007,
+            "int_rate_to_loan_amt_ratio": 0.005,
+            "loan_to_emp_length_ratio": 0.003,
+            "loan_intent": 0.002,
+            "person_home_ownership": 0.001,
+        }
+    ).sort_values()
 
     fig, ax = plt.subplots(figsize=(8, 6))
     colors = ["#c44e52" if v >= 0.05 else "#4c72b0" for v in feature_imp.values]
@@ -544,8 +684,13 @@ with tab_model:
     ax.set_title("Importância das features — HistGradientBoosting")
     ax.axvline(0, color="black", linewidth=0.5)
     for bar, val in zip(ax.patches, feature_imp.values):
-        ax.text(val + 0.001, bar.get_y() + bar.get_height() / 2,
-                f"{val:.3f}", va="center", fontsize=8)
+        ax.text(
+            val + 0.001,
+            bar.get_y() + bar.get_height() / 2,
+            f"{val:.3f}",
+            va="center",
+            fontsize=8,
+        )
     plt.tight_layout()
     st.pyplot(fig)
     plt.close()
